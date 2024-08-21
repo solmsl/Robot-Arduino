@@ -1,4 +1,7 @@
 #include <Bluepad32.h>
+//#include <Servo.h>
+
+//Servo myservo;
 
 const int PinIN1 = 26;
 const int PinIN2 = 27;
@@ -6,7 +9,42 @@ const int PinIN3 = 16;
 const int PinIN4 = 17;
 const int IR_Sensor_Left = 34;
 const int IR_Sensor_Right = 32;
+bool estado=true;
+// const int motor = 19;
 
+// Arduino setup function. Runs in CPU 1
+void setup() {
+  // myservo.attach(motor);
+  
+  Serial.begin(115200);
+  Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
+  const uint8_t* addr = BP32.localBdAddress();
+  Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+
+  // Setup the Bluepad32 callbacks
+  BP32.setup(&onConnectedController, &onDisconnectedController);
+
+  // "forgetBluetoothKeys()" should be called when the user performs
+  // a "device factory reset", or similar.
+  // Calling "forgetBluetoothKeys" in setup() just as an example.
+  // Forgetting Bluetooth keys prevents "paired" gamepads to reconnect.
+  // But it might also fix some connection / re-connection issues.
+  BP32.forgetBluetoothKeys();
+
+  // Enables mouse / touchpad support for gamepads that support them.
+  // When enabled, controllers like DualSense and DualShock4 generate two connected devices:
+  // - First one: the gamepad
+  // - Second one, which is a "virtual device", is a mouse.
+  // By default, it is disabled.
+  BP32.enableVirtualDevice(false);
+
+  pinMode(PinIN1, OUTPUT);
+  pinMode(PinIN2, OUTPUT);
+  pinMode(PinIN3, OUTPUT);
+  pinMode(PinIN4, OUTPUT);
+  pinMode(IR_Sensor_Left, INPUT);
+  pinMode(IR_Sensor_Right, INPUT);
+}
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
@@ -18,6 +56,11 @@ void moveForward() {
   digitalWrite(PinIN4, HIGH);
   Serial.print("Adelante");
 }
+
+// void Ataque()
+// {
+//   digitalWrite(motor, HIGH);
+// }
 
 void moveBackwards() {
   // Mueve el robot hacia atrás
@@ -269,43 +312,22 @@ void processControllers() {
     }
   }
 }
-
-// Arduino setup function. Runs in CPU 1
-void setup() {
-  Serial.begin(115200);
-  Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
-  const uint8_t* addr = BP32.localBdAddress();
-  Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
-
-  // Setup the Bluepad32 callbacks
-  BP32.setup(&onConnectedController, &onDisconnectedController);
-
-  // "forgetBluetoothKeys()" should be called when the user performs
-  // a "device factory reset", or similar.
-  // Calling "forgetBluetoothKeys" in setup() just as an example.
-  // Forgetting Bluetooth keys prevents "paired" gamepads to reconnect.
-  // But it might also fix some connection / re-connection issues.
-  BP32.forgetBluetoothKeys();
-
-  // Enables mouse / touchpad support for gamepads that support them.
-  // When enabled, controllers like DualSense and DualShock4 generate two connected devices:
-  // - First one: the gamepad
-  // - Second one, which is a "virtual device", is a mouse.
-  // By default, it is disabled.
-  BP32.enableVirtualDevice(false);
-
-  pinMode(PinIN1, OUTPUT);
-  pinMode(PinIN2, OUTPUT);
-  pinMode(PinIN3, OUTPUT);
-  pinMode(PinIN4, OUTPUT);
-  pinMode(IR_Sensor_Left, INPUT);
-  pinMode(IR_Sensor_Right, INPUT);
+void inicio(state){
+  if (state==true){
+    moveForward();
+    serial.printIn("avanza");
+    beQuiet();
+    serial.printIn("para");
+    delay(200);
+    serial.printIn("avanza");
+    moveForward();
+    beQuiet();
+    serial.printIn("para");
+  }
 }
-
-
-
 // Arduino loop function. Runs in CPU 1.
 void loop() {
+  if(estado==true)
   // This call fetches all the controllers' data.
   // Call this function in your main loop.
   bool dataUpdated = BP32.update();

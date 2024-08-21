@@ -10,15 +10,16 @@ const int IR_Sensor_Left = 34;
 const int IR_Sensor_Right = 32;
 
 
+
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
-  // Declaración de la función
+// Declaración de la función
 
 void Girar(int valor) {
   if (valor < 90) {
     int valorInvertido = 255 - valor;
     // Gira a la izquierda
-    analogWrite(ENA, valorInvertido); // Controla la velocidad del motor A
-    analogWrite(ENB, 0);     // Detiene el motor B
+    analogWrite(ENA, valorInvertido);  // Controla la velocidad del motor A
+    analogWrite(ENB, 0);               // Detiene el motor B
 
     // Configura los pines para girar a la izquierda
     digitalWrite(PinIN1, LOW);
@@ -31,8 +32,8 @@ void Girar(int valor) {
     Serial.println();
   } else if (valor > 180) {
     // Gira a la derecha
-    analogWrite(ENA, 0);     // Detiene el motor A
-    analogWrite(ENB, valor); // Controla la velocidad del motor B
+    analogWrite(ENA, 0);      // Detiene el motor A
+    analogWrite(ENB, valor);  // Controla la velocidad del motor B
 
     // Configura los pines para girar a la derecha
     digitalWrite(PinIN1, HIGH);
@@ -44,10 +45,6 @@ void Girar(int valor) {
     Serial.print(valor);
     Serial.println();
   } else {
-    // Si el valor está entre 90 y 180, no hace nada
-    analogWrite(ENA, 0);     // Detiene el motor A
-    analogWrite(ENB, 0);     // Detiene el motor B
-
     Serial.println("No gira.");
   }
 }
@@ -67,15 +64,15 @@ int ajustarRango(int valor) {
 
 void moveForward(int velocidad) {
   // Configura la velocidad del motor usando PWM
-  analogWrite(ENA, velocidad); // Controla el motor A
-  analogWrite(ENB, velocidad); // Controla el motor B
+  analogWrite(ENA, velocidad);  // Controla el motor A
+  analogWrite(ENB, velocidad);  // Controla el motor B
 
   // Mueve el robot hacia delante
-  digitalWrite(PinIN1, HIGH);
-  digitalWrite(PinIN2, LOW);
-  digitalWrite(PinIN3, LOW);
-  digitalWrite(PinIN4, HIGH);
-  
+  digitalWrite(PinIN1, LOW);
+  digitalWrite(PinIN2, HIGH);
+  digitalWrite(PinIN3, HIGH);
+  digitalWrite(PinIN4, LOW);
+
   Serial.print("Adelante: ");
   Serial.print(velocidad);
   Serial.println(" ");
@@ -87,16 +84,15 @@ void moveBackwards(int velocidad) {
   analogWrite(ENB, velocidad);
 
   // Mueve el robot hacia atrás
-  digitalWrite(PinIN1, LOW);
-  digitalWrite(PinIN2, HIGH);
-  digitalWrite(PinIN3, HIGH);
-  digitalWrite(PinIN4, LOW);
+  digitalWrite(PinIN1, HIGH);
+  digitalWrite(PinIN2, LOW);
+  digitalWrite(PinIN3, LOW);
+  digitalWrite(PinIN4, HIGH);
   Serial.print("Atras: ");
   Serial.print(velocidad);
   Serial.println(" ");
-
-
 }
+
 
 void moveLeft() {
   // Mueve el robot a la izquierda
@@ -118,6 +114,8 @@ void moveRight() {
 }
 
 void beQuiet() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
   digitalWrite(PinIN1, LOW);
   digitalWrite(PinIN2, LOW);
   digitalWrite(PinIN3, LOW);
@@ -126,6 +124,9 @@ void beQuiet() {
 
 void rotate100() {
   //Giro de 100 grados
+  analogWrite(ENA, 255);
+  analogWrite(ENB, 255);
+
   digitalWrite(PinIN1, HIGH);
   digitalWrite(PinIN2, LOW);
   digitalWrite(PinIN3, HIGH);
@@ -250,7 +251,7 @@ void dumpGamepad(ControllerPtr ctl) {
     ctl->miscButtons(),  // bitmask of pressed "misc" buttons
     ctl->gyroX(),        // Gyro X
     ctl->gyroY(),        // Gyro Y
-    ctl->gyroZ(),        // Gyro Z // Se imaginan usar el giroscopio??? jajajaj 
+    ctl->gyroZ(),        // Gyro Z // Se imaginan usar el giroscopio??? jajajaj
     ctl->accelX(),       // Accelerometer X
     ctl->accelY(),       // Accelerometer Y
     ctl->accelZ()        // Accelerometer Z
@@ -265,16 +266,24 @@ void processGamepad(ControllerPtr ctl) {
   // There are different ways to query whether a button is pressed.
   // By query each button individually:
   //  a(), b(), x(), y(), l1(), etc...
-  if (ctl->a()) {
-    moveForward(255);
-  }
+
+  // if (ctl->a()) {
+  //   moveForward(255);
+  // }
 
   //Serial.print(ctl->throttle());
   //Serial.print(ctl->brake());
+  Serial.println(ajustarRangoStick(ctl->axisX()));
+  if (ajustarRangoStick(ctl->axisX()) >= 160 || ajustarRangoStick(ctl->axisX()) <= 120) {
+    Girar(ajustarRangoStick(ctl->axisX()));
+  } else if (ajustarRango(ctl->throttle()) >= 100) {
+    moveForward(ajustarRango(ctl->throttle()));
+  } else if (ajustarRango(ctl->brake()) >= 100) {
+    moveBackwards(ajustarRango(ctl->brake()));
+  } else {
+    beQuiet();
+  }
 
-  moveForward(ajustarRango(ctl->throttle()));
-  moveBackwards(ajustarRango(ctl->brake()));
-  Girar(ajustarRangoStick(ctl->axisX()));
 
 
   if (ctl->b()) {
@@ -352,6 +361,8 @@ void processControllers() {
 
 // Arduino setup function. Runs in CPU 1
 void setup() {
+
+
   Serial.begin(115200);
   Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
   const uint8_t* addr = BP32.localBdAddress();
@@ -380,6 +391,8 @@ void setup() {
   pinMode(PinIN4, OUTPUT);
   pinMode(IR_Sensor_Left, INPUT);
   pinMode(IR_Sensor_Right, INPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
 }
 
 

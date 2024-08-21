@@ -2,12 +2,12 @@ const int PinIN1 = 7;
 const int PinIN2 = 6;
 const int PinIN3 = 5;
 const int PinIN4 = 4;
-const int PinSensorL = 8;   // Sensor izquierdo, antes era el puerto 2
-const int PinSensorR = 9;  // Sensor derecho, antes era el puerto 3
+const int PinSensorL = 2;   // Sensor izquierdo, antes era el puerto 2
+const int PinSensorR = 3; // Sensor derecho, antes era el puerto 3
 
 //sensor ultrasonico
-const int Trigger = 2;   //Pin digital 2 para el Trigger del sensor
-const int Echo = 3;   //Pin digital 3 para el Echo del sensor
+const int Trigger = 8;   //Pin digital 2 para el Trigger del sensor
+const int Echo = 9;   //Pin digital 3 para el Echo del sensor
 
 void setup() {
   Serial.begin(9600);
@@ -87,7 +87,7 @@ void sigueLineas() {
 
 void sensor_de_prox() {
   // Hace algo
-  long t; //timepo que demora en llegar el eco
+  long t; //tiempo que demora en llegar el eco
   long d; //distancia en centimetros
 
   digitalWrite(Trigger, HIGH);
@@ -106,11 +106,12 @@ void sensor_de_prox() {
     moveForward();
     }
     else{   
-        stop();
+        moveBackwards();
+        sigueLineas();
       }
 }
 
 void loop() {
-  //sigueLineas();
+  sigueLineas();
   sensor_de_prox();
 }
